@@ -1,0 +1,27 @@
+# Environment variables and secrets
+.env
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Application specific
+downloads/
+logs/
+*.log
+
+# Temp files and IDE files
+.vscode/
+.idea/
+models.txt
+notes.txt
+test_gemini.py
+test_gemini2.py
+app.py

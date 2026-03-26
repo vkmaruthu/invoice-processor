@@ -1,0 +1,23 @@
+# ── Invoice Processor — Python Dependencies ────────────────────────────────────
+# Install with:  pip install -r requirements.txt
+
+# Email
+# (imaplib ships with Python stdlib — no extra package needed)
+
+# OCR — docTR (no Tesseract binary or Poppler needed, works on Windows natively)
+python-doctr[torch]>=0.8.1   # Deep-learning OCR (PyTorch backend)
+Pillow>=10.0.0               # Image handling
+numpy>=1.24.0                # Required by docTR
+pdfplumber>=0.10.3           # Native PDF text extraction (fast path for digital PDFs)
+
+# Google Gemini
+google-generativeai>=0.7.0
+
+# MongoDB
+pymongo>=4.6.0
+
+# Scheduler
+schedule>=1.2.0
+
+# Environment / config
+python-dotenv>=1.0.0
