@@ -3,7 +3,7 @@
 Automated end-to-end invoice processing pipeline:
 
 ```
-Gmail (IMAP) → Attachment Download → Tesseract OCR → Gemini AI Extraction → MongoDB
+Gmail (IMAP) → Attachment Download → docTR/pdfplumber OCR → Gemini AI Extraction → MongoDB
 ```
 
 ---
@@ -18,7 +18,7 @@ invoice_processor/
 ├── services/
 │   ├── __init__.py
 │   ├── email_service.py     ← IMAP monitoring + attachment download
-│   ├── ocr_service.py       ← Tesseract / pdfplumber OCR
+│   ├── ocr_service.py       ← pdfplumber / docTR OCR
 │   ├── gemini_service.py    ← Gemini AI JSON extraction
 │   └── database_service.py ← MongoDB CRUD
 ├── controllers/
@@ -33,6 +33,7 @@ invoice_processor/
 ├── main.py                  ← ← ← ENTRY POINT — run this
 ├── requirements.txt
 ├── .env.example
+├── .gitignore
 └── README.md
 ```
 
@@ -45,43 +46,17 @@ invoice_processor/
 python --version   # should show 3.11 or higher
 ```
 
-### 2 — Tesseract OCR binary
+### 2 — OCR Libraries
+This project uses **pdfplumber** for digital PDFs and deep-learning **docTR** for scanned documents/images. It works on all operating systems without requiring external Tesseract or Poppler binaries.
 
-**Ubuntu / Debian**
-```bash
-sudo apt install tesseract-ocr tesseract-ocr-eng
-```
-
-**macOS**
-```bash
-brew install tesseract
-```
-
-**Windows**
-Download installer from https://github.com/tesseract-ocr/tessdoc and add to PATH.
-
-### 3 — Poppler (required by pdf2image for PDF rasterisation)
-
-**Ubuntu / Debian**
-```bash
-sudo apt install poppler-utils
-```
-
-**macOS**
-```bash
-brew install poppler
-```
-
-**Windows**
-Download from https://github.com/oschwartz10612/poppler-windows and add `bin/` to PATH.
-
-### 4 — MongoDB
+### 3 — MongoDB
 Install locally (https://www.mongodb.com/try/download/community) **or** use MongoDB Atlas (cloud).
 For local:
 ```bash
 sudo systemctl start mongod   # Linux
 brew services start mongodb-community  # macOS
 ```
+*(On Windows, MongoDB runs as a background service by default after installation).*
 
 ---
 
@@ -99,6 +74,7 @@ source venv/bin/activate       # Windows: venv\Scripts\activate
 ```
 
 ### Step 3 — Install Python dependencies
+*(includes docTR PyTorch weights)*
 ```bash
 pip install -r requirements.txt
 ```
@@ -113,8 +89,10 @@ Edit `.env` and fill in:
 |---|---|
 | `EMAIL_ADDRESS` | Your Gmail address |
 | `EMAIL_PASSWORD` | Gmail **App Password** (see below) |
+| `SUBJECT_FILTER` | Substring match for emails (e.g., `Invoice`) |
 | `MONGO_URI` | MongoDB connection string |
 | `GEMINI_API_KEY` | Google AI Studio API key |
+| `GEMINI_MODEL` | Set to `gemini-2.5-flash` |
 
 #### Getting a Gmail App Password
 1. Enable 2-factor authentication on your Google account.
@@ -136,9 +114,9 @@ python main.py
 
 The app will:
 1. Connect to Gmail via IMAP.
-2. Search for **unseen** emails with subject containing `"Invoice Copy"`.
+2. Search for **unseen** emails with subject containing your `SUBJECT_FILTER` (like `"Invoice"`).
 3. Download PDF / JPG / PNG attachments to `downloads/`.
-4. Run OCR on each attachment.
+4. Run OCR on each attachment (smartly switching between native text layers and image scanning).
 5. Send OCR text to Gemini for structured data extraction.
 6. Save the extracted JSON to MongoDB (`invoice_db.invoices`).
 7. Repeat every 30 seconds (configurable via `POLL_INTERVAL`).
@@ -191,7 +169,6 @@ Log files rotate at 10 MB (5 backups kept).
 | Problem | Fix |
 |---|---|
 | `IMAP login failed` | Check email/password; use App Password for Gmail |
-| `TesseractNotFoundError` | Tesseract binary missing from PATH |
+| `docTR not installed` | Run `pip install python-doctr[torch]` |
 | `ServerSelectionTimeoutError` | MongoDB not running |
-| `GEMINI_API_KEY is not configured` | Edit `.env` and add your key |
-| PDF produces no text | PDF might be image-only; ensure poppler is installed for OCR fallback |
+| `Gemini extraction failed: 404` | Your API key doesn't have access to the old model. Set `GEMINI_MODEL=gemini-2.5-flash` in `.env` |
