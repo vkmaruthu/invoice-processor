@@ -3,7 +3,7 @@
 Automated end-to-end invoice processing pipeline:
 
 ```
-Gmail (IMAP) → Attachment Download → Tesseract OCR → Gemini AI Extraction → MongoDB
+Gmail (IMAP) → Attachment Download → docTR OCR → Gemini AI Extraction → MongoDB
 ```
 
 ---
